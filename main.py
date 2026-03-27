@@ -1,4 +1,4 @@
-# SchnopTAP Music Player – Full Cozy Themed Version
+# SchnopTAP Music Player – Turntable Edition
 # 1200+ lines of fully running code
 # tkinter + pygame mixer
 # modern UI, animations, playlists, metadata, theming
@@ -18,7 +18,7 @@ import mutagen.flac
 import mutagen.wave
 import mutagen.aiff
 
-# ----------------------------- INIT -----------------------------
+# ----------------------------- INIT (Turntable visuals added) -----------------------------
 pygame.mixer.init()
 
 APP_TITLE = "SchnopTAP"
@@ -88,7 +88,7 @@ class SchnopTapApp:
         self.playlist_box.pack(pady=10)
         self.playlist_box.bind("<<ListboxSelect>>", self.playlist_select)
 
-        # player panel
+        # player panel (turntable)
         self.player_panel = tk.Frame(self.content, bg=THEME_BG)
         self.player_panel.pack(side="right", fill="both", expand=True, padx=20, pady=20)
 
@@ -97,6 +97,23 @@ class SchnopTapApp:
 
         self.song_artist = tk.Label(self.player_panel, text="---", fg="#bbb", bg=THEME_BG, font=("Segoe UI", 16))
         self.song_artist.pack(anchor="w")
+
+        # turntable canvas
+        self.turntable_canvas = tk.Canvas(self.player_panel, width=400, height=400, bg=THEME_DARK, highlightthickness=0)
+        self.turntable_canvas.pack(pady=20)
+
+        # draw platter
+        self.platter = self.turntable_canvas.create_oval(20, 20, 380, 380, fill="#000", outline="#222", width=4)
+
+        # record
+        self.record = self.turntable_canvas.create_oval(60, 60, 340, 340, fill="#111", outline="#333", width=2)
+        self.record_label = self.turntable_canvas.create_oval(165, 165, 235, 235, fill="#900", outline="#000")
+
+        # tonearm
+        self.tonearm = self.turntable_canvas.create_line(300, 100, 350, 50, 360, 45, fill="#ccc", width=6, smooth=True)
+
+        self.record_angle = 0
+        self.animate_record()
 
         # progress bar
         self.progress_frame = tk.Frame(self.player_panel, bg=THEME_BG)
@@ -196,7 +213,7 @@ class SchnopTapApp:
         self.playlist_box.selection_set(current_index)
         self.load_and_play()
 
-    # ----------------------------- VOLUME + PROGRESS -----------------------------
+    # ----------------------------- VOLUME + TURNTABLE ANIMATION + PROGRESS -----------------------------
     def change_volume(self, _):
         pygame.mixer.music.set_volume(self.vol_var.get())
 
@@ -213,7 +230,21 @@ class SchnopTapApp:
                 pct = (pos / total) * 100
                 self.progress_var.set(pct)
                 self.time_label.config(text=f"{int(pos//60)}:{int(pos%60):02d} / {int(total//60)}:{int(total%60):02d}")
-        self.root.after(200, self.update_progress_loop)
+                self.root.after(200, self.update_progress_loop)
+
+    # turntable animation loop
+    def animate_record(self):
+        if pygame.mixer.music.get_busy():
+            self.record_angle = (self.record_angle + 3) % 360
+            cx, cy = 200, 200
+            r1, r2 = 60, 170
+            # rotate tonearm slightly when playing
+            pos = 100 + (self.record_angle % 50)
+            self.turntable_canvas.coords(self.tonearm, 300, 100, pos + 200, 50, pos + 210, 45)
+        else:
+            # reset tonearm
+            self.turntable_canvas.coords(self.tonearm, 300, 100, 350, 50, 360, 45)
+        self.root.after(40, self.animate_record)
 
 # ----------------------------- RUN -----------------------------
 if __name__ == "__main__":
